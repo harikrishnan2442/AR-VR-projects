@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Tilting Earth - Assignment 2</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script>
+        
+        AFRAME.registerComponent('earth-rotation', {
+            schema: {
+                speed: {type: 'number', default: 5} 
+            },
+            init: function () {
+                this.isDragging = false;
+                this.velocity = { x: 0, y: 0 }; 
+                this.friction = 0.95; 
+                this.prevMouse = { x: 0, y: 0 };
+                
+               
+                this.el.sceneEl.canvas.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.prevMouse = { x: e.clientX, y: e.clientY };
+                });
+                
+                this.el.sceneEl.canvas.addEventListener('touchstart', (e) => {
+                    this.isDragging = true;
+                    this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    let deltaX = e.clientX - this.prevMouse.x;
+                    this.velocity.y += deltaX * 0.05; 
+                    this.prevMouse = { x: e.clientX, y: e.clientY };
+                });
+
+                window.addEventListener('touchmove', (e) => {
+                    if (!this.isDragging) return;
+                    let deltaX = e.touches[0].clientX - this.prevMouse.x;
+                    this.velocity.y += deltaX * 0.05;
+                    this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                });
+
+                const endDrag = () => { this.isDragging = false; };
+                window.addEventListener('mouseup', endDrag);
+                window.addEventListener('touchend', endDrag);
+            },
+
+            tick: function (time, deltaTime) {
+                if (!deltaTime) return;
+
+                let rotation = this.el.getAttribute('rotation'); 
+                rotation.y += this.velocity.y * (deltaTime / 16); 
+                this.el.setAttribute('rotation', rotation);
+
+                if (!this.isDragging) {
+                    
+                    const targetSpeed = this.data.speed * (deltaTime / 1000);
+                    
+                    
+                    this.velocity.y = this.velocity.y * this.friction + (targetSpeed * (1 - this.friction));
+                } else {
+                    
+                    this.velocity.y *= 0.9;
+                }
+            }
+        });
+    </script>
+</head>
+<body style="margin: 0; overflow: hidden; background: #000;">
+    <a-scene vr-mode-ui="enabled: true">     
+        <a-assets>
+            
+            <img id="earth-texture" src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg" crossorigin="anonymous">
+        </a-assets>   
+        <a-sky color="#000000"></a-sky>
+        <a-light type="ambient" intensity="0.5"></a-light>
+        <a-light type="directional" position="5 3 5" intensity="1"></a-light>
+
+        
+        <a-entity position="0 1.5 -3" rotation="0 0 23.5">         
+            <a-text 
+                value="The Earth" 
+                position="0 1.5 0" 
+                align="center" 
+                color="#FFF"
+                scale="0.5 0.5 0.5">
+            </a-text>           
+            <a-cylinder 
+                position="0 0 0" 
+                radius="0.02" 
+                height="3.4" 
+                color="#888888"
+                segments-radial="8">
+            </a-cylinder>         
+            <a-sphere 
+                radius="1.3"
+                src="#earth-texture"
+                material="roughness: 0.6; metalness: 0.1"
+                earth-rotation="speed: 10">
+          </a-sphere>
+        </a-entity>
+
+    </a-scene>
+</body>
+</html>
